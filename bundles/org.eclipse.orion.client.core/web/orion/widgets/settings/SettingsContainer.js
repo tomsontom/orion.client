@@ -23,7 +23,36 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 	dojo.declare("orion.widgets.settings.SettingsContainer", [orion.widgets.settings.SplitSelectionLayout], { //$NON-NLS-0$
 
 		constructor: function() {		
-			
+			this.defaultCategories = [
+				{
+					id: "userSettings", //$NON-NLS-0$
+					innerHTML: messages["User Profile"],
+					show: this.showUserSettings
+				},
+				{
+					id: "themeBuilder", //$NON-NLS-0$
+					innerHTML: 'UI Theme', // messages["Themes"],
+					show: this.showThemeBuilder
+				},
+				{
+					id: "editorThemeBuilder", //$NON-NLS-0$
+					innerHTML: 'Editor Theme', // messages["Themes"],
+					show: this.showEditorThemeBuilder
+				},
+				{
+					id: "plugins", //$NON-NLS-0$
+					innerHTML: messages["Plugins"],
+					show: this.showPlugins
+				},
+				{
+					id: "pluginSettings", //$NON-NLS-0$
+					innerHTML: messages.PluginSettings,
+					show: this.showPluginSettings
+				}];
+			this.defaultCategories.forEach(function(item) {
+				item.show = item.show.bind(this, item.id);
+				item.onclick = item.show;
+			}.bind(this));
 		},
 
 		postCreate: function() {
@@ -106,79 +135,6 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			}
 		},
 
-		addPlugins: function() {
-
-			var item = {
-				id: "plugins", //$NON-NLS-0$
-				innerHTML: messages["Plugins"],
-				"class": 'navbar-item', //$NON-NLS-1$ //$NON-NLS-0$
-				role: "tab", //$NON-NLS-0$
-				tabindex: -1,
-				"aria-selected": "false", //$NON-NLS-1$ //$NON-NLS-0$
-				onclick: dojo.hitch( this, 'showPlugins', "plugins" ) //$NON-NLS-1$ //$NON-NLS-0$
-			};
-
-			this.addCategory(item, this.initialSettings.length);
-		},
-		
-		addUserSettings: function() {
-
-			var item = {
-				id: "userSettings", //$NON-NLS-0$
-				innerHTML: messages["User Profile"],
-				"class": 'navbar-item', //$NON-NLS-1$ //$NON-NLS-0$
-				role: "tab", //$NON-NLS-0$
-				tabindex: -1,
-				"aria-selected": "false", //$NON-NLS-1$ //$NON-NLS-0$
-				onclick: dojo.hitch( this, 'showUserSettings', "userSettings" ) //$NON-NLS-1$ //$NON-NLS-0$
-			};
-
-			this.addCategory(item, this.initialSettings.length);
-		},
-		
-		addThemeBuilder: function() {
-
-			var item = {
-				id: "themeBuilder", //$NON-NLS-0$
-				innerHTML: 'UI Theme', // messages["Themes"],
-				"class": 'navbar-item', //$NON-NLS-1$ //$NON-NLS-0$
-				role: "tab", //$NON-NLS-0$
-				tabindex: -1,
-				"aria-selected": "false", //$NON-NLS-1$ //$NON-NLS-0$
-				onclick: dojo.hitch( this, 'showThemeBuilder', "themeBuilder" ) //$NON-NLS-1$ //$NON-NLS-0$
-			};
-
-			this.addCategory(item, this.initialSettings.length);
-		},
-		
-		addEditorThemeBuilder: function() {
-
-			var item = {
-				id: "editorThemeBuilder", //$NON-NLS-0$
-				innerHTML: 'Editor Theme', // messages["Themes"],
-				"class": 'navbar-item', //$NON-NLS-1$ //$NON-NLS-0$
-				role: "tab", //$NON-NLS-0$
-				tabindex: -1,
-				"aria-selected": "false", //$NON-NLS-1$ //$NON-NLS-0$
-				onclick: dojo.hitch( this, 'showEditorThemeBuilder', "editorThemeBuilder" ) //$NON-NLS-1$ //$NON-NLS-0$
-			};
-
-			this.addCategory(item, this.initialSettings.length);
-		},
-
-		addPluginSettings: function() {
-			var item = {
-				id: "pluginSettings", //$NON-NLS-0$
-				innerHTML: messages.PluginSettings,
-				"class": 'navbar-item', //$NON-NLS-1$ //$NON-NLS-0$
-				role: "tab", //$NON-NLS-0$
-				tabindex: -1,
-				"aria-selected": "false", //$NON-NLS-1$ //$NON-NLS-0$
-				onclick: this.showPluginSettings.bind(this, "pluginSettings") //$NON-NLS-0$
-			};
-			this.addCategory(item, this.initialSettings.length);
-		},
-		
 		showThemeBuilder: function(id){
 		
 			this.selectCategory(id);
@@ -286,7 +242,6 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 				serviceRegistry: this.registry,
 				settingsRegistry: this.settingsRegistry
 			});
-			// starts itself. will also remove previous version of itself
 		},
 
 /*	showPlugins - iterates over the plugin array, reads
@@ -347,50 +302,46 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 		},
 
 		showById: function(id) {
-		
-				
 			
 			this.updateToolbar(id);
-				
-				switch(id){
-				
-					case "plugins": //$NON-NLS-0$
-						this.showPlugins(id);
-						break;
-					
-					case "userSettings": //$NON-NLS-0$
-						this.showUserSettings(id);
-						break;
-						
-					case "themeBuilder":
-						this.showThemeBuilder(id);
-						break;
-						
-					case "editorThemeBuilder":
-						this.showEditorThemeBuilder(id);
-						break;
-						
-					case "pluginSettings":
-						this.showPluginSettings(id);
-						break;
-	
-					default:
-						this.selectCategory(id);
-						break;
-				
-				}	
+
+			var isDefaultCategory = this.defaultCategories.some(function(category) {
+				if (category.id === id) {
+					category.show();
+				}
+				return true;
+			});
+
+			if (!isDefaultCategory) {
+				this.selectCategory(id);
+			}
+		},
+
+		addCategory: function(category, index) {
+			category['class'] = 'navbar-item'; //$NON-NLS-1$ //$NON-NLS-0$
+			category.role = "tab";
+			category.tabindex = -1;
+			category["aria-selected"] = "false"; //$NON-NLS-1$ //$NON-NLS-0$
+			this.inherited(arguments);
+		},
+
+		addCategories: function() {
+			this.defaultCategories.forEach(function(category) {
+				this.addCategory(category, this.initialSettings.length);
+			}.bind(this));
+			// TODO add extension categories here
+			// category: 
+			// cat. id plus a label
+			// cat.onclick = showPluginSettings(category)
+			//
 		},
 
 		drawUserInterface: function(settings) {
 
 			this.inherited(arguments);
 
+			this.addCategories();
 
-			this.addUserSettings();
-			this.addThemeBuilder();
-			this.addEditorThemeBuilder();
-			this.addPlugins();
-			this.addPluginSettings();
 			this.processHash();
 
 			/* Adjusting width of mainNode - the css class is shared 
