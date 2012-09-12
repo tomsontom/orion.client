@@ -23,35 +23,40 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 	dojo.declare("orion.widgets.settings.SettingsContainer", [orion.widgets.settings.SplitSelectionLayout], { //$NON-NLS-0$
 
 		constructor: function() {		
-			this.defaultCategories = [
+			this.settingsCategories = [
 				{
 					id: "userSettings", //$NON-NLS-0$
-					innerHTML: messages["User Profile"],
+					textContent: messages["User Profile"],
 					show: this.showUserSettings
 				},
 				{
 					id: "themeBuilder", //$NON-NLS-0$
-					innerHTML: 'UI Theme', // messages["Themes"],
+					textContent: 'UI Theme', // messages["Themes"],
 					show: this.showThemeBuilder
 				},
 				{
 					id: "editorThemeBuilder", //$NON-NLS-0$
-					innerHTML: 'Editor Theme', // messages["Themes"],
+					textContent: 'Editor Theme', // messages["Themes"],
 					show: this.showEditorThemeBuilder
 				},
 				{
 					id: "plugins", //$NON-NLS-0$
-					innerHTML: messages["Plugins"],
+					textContent: messages["Plugins"],
 					show: this.showPlugins
-				},
-				{
-					id: "pluginSettings", //$NON-NLS-0$
-					innerHTML: messages.PluginSettings,
-					show: this.showPluginSettings
 				}];
-			this.defaultCategories.forEach(function(item) {
+			this.settingsCategories.forEach(function(item) {
 				item.show = item.show.bind(this, item.id);
-				item.onclick = item.show;
+			}.bind(this));
+		},
+
+		postMixInProperties: function() {
+			// Add extension categories
+			this.settingsRegistry.getCategories().sort().forEach(function(category, i) {
+				this.settingsCategories.push({
+					id: category,
+					textContent: messages[category] || category,
+					show: this.showPluginSettings.bind(this, category)
+				});
 			}.bind(this));
 		},
 
@@ -79,7 +84,7 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 				var selection = prefs.get( 'selection' );
 				
 				var category = pageParams.category || selection; //$NON-NLS-0$
-				container.showById(category);
+				container.showByCategory(category);
 				
 			} );
 			
@@ -230,7 +235,7 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			this.pluginWidget.startup();
 		},
 
-		initPluginSettings: function(id) {
+		initPluginSettings: function(category) {
 			dojo.empty(this.table);
 
 			if (this.pluginSettingsWidget) {
@@ -240,7 +245,8 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			this.pluginSettingsWidget = new SettingsList({
 				parent: this.table,
 				serviceRegistry: this.registry,
-				settingsRegistry: this.settingsRegistry
+				settings: this.settingsRegistry.getSettings(category),
+				title: messages[category] || category
 			});
 		},
 
@@ -262,15 +268,14 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			this.initPlugins(id);
 		},
 
-		// Creates the RHS content of plugins settings and stuff
-		showPluginSettings: function(id) {
+		showPluginSettings: function(category) {
+			var id = category;
 			this.selectCategory(id);
 
-			this.initPluginSettings(id);
+			this.initPluginSettings(category);
 		},
 		
 		selectCategory: function(id) {
-
 			this.preferences.getPreferences('/settingsContainer', 2).then(function(prefs){
 				prefs.put( 'selection', id );
 			} );
@@ -301,15 +306,15 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			}
 		},
 
-		showById: function(id) {
+		showByCategory: function(id) {
 			
 			this.updateToolbar(id);
 
-			var isDefaultCategory = this.defaultCategories.some(function(category) {
+			var isDefaultCategory = this.settingsCategories.some(function(category) {
 				if (category.id === id) {
 					category.show();
+					return true;
 				}
-				return true;
 			});
 
 			if (!isDefaultCategory) {
@@ -317,23 +322,20 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 			}
 		},
 
-		addCategory: function(category, index) {
-			category['class'] = 'navbar-item'; //$NON-NLS-1$ //$NON-NLS-0$
+		addCategory: function(category) {
+			category['class'] = (category['class'] || '') + ' navbar-item'; //$NON-NLS-1$ //$NON-NLS-0$
 			category.role = "tab";
 			category.tabindex = -1;
 			category["aria-selected"] = "false"; //$NON-NLS-1$ //$NON-NLS-0$
+			category.onclick = category.show;
 			this.inherited(arguments);
 		},
 
 		addCategories: function() {
-			this.defaultCategories.forEach(function(category) {
-				this.addCategory(category, this.initialSettings.length);
-			}.bind(this));
-			// TODO add extension categories here
-			// category: 
-			// cat. id plus a label
-			// cat.onclick = showPluginSettings(category)
-			//
+			var self = this;
+			this.settingsCategories.forEach(function(category, i) {
+				self.addCategory(category);
+			});
 		},
 
 		drawUserInterface: function(settings) {
@@ -421,226 +423,6 @@ define(['i18n!orion/settings/nls/messages', 'require', 'dojo', 'dijit', 'orion/u
 							{ "ui": "Login", "label": "Login", "input": "textfield", "setting": "" },
 							{ "ui": "Email Address", "label": "Email Address", "input": "textfield", "setting": "" }*/
 
-initialSettings: [
-//			{"category": "User",
-//				"subcategory": [{ "ui": "Personal information", "label": "Personal information",
-//				"items": [ { "ui": "Login", "label": "Login", "input": "textfield", "setting": "" },
-//							{ "ui": "Email Address", "label": "Email Address", "input": "textfield", "setting": "" } ]}
-//				]
-//			},
-			{"category": messages['JavaScript Editor'], //$NON-NLS-0$
-			"subcategory": [{
-				"ui": messages["Font"], //$NON-NLS-0$
-				"label": messages['Font'], //$NON-NLS-0$
-				"items": [{ //$NON-NLS-0$
-					"ui": messages["Family"], //$NON-NLS-0$
-					"label": messages['Family'], //$NON-NLS-0$
-					"input": "combo", //$NON-NLS-1$ //$NON-NLS-0$
-					"values": [{ //$NON-NLS-0$
-						"label": messages["Sans Serif"] //$NON-NLS-0$
-					},
-					{
-						"label": messages["Serif"] //$NON-NLS-0$
-					}],
-					"setting": messages['Serif'] //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Size"], //$NON-NLS-0$
-					"label": messages['Size'], //$NON-NLS-0$
-					"input": "combo", //$NON-NLS-1$ //$NON-NLS-0$
-					"values": [{ //$NON-NLS-0$
-						"label": messages["8pt"] //$NON-NLS-0$
-					},
-					{
-						"label": messages["9pt"] //$NON-NLS-0$
-					},
-					{
-						"label": messages["10pt"] //$NON-NLS-0$
-					},
-					{
-						"label": "11pt" //$NON-NLS-1$ //$NON-NLS-0$
-					},
-					{
-						"label": messages["12pt"] //$NON-NLS-0$
-					}],
-					"setting": messages['10pt'] //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Color"], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#000000" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Background"], //$NON-NLS-0$
-					"label": messages['Background'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				}]
-			},
-
-			{
-				"ui": messages["Strings"], //$NON-NLS-0$
-				"label": messages["String Types"], //$NON-NLS-0$
-				"items": [{ //$NON-NLS-0$
-					"ui": messages['Color'], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": messages["blue"] //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Weight"], //$NON-NLS-0$
-					"label": messages['Weight'], //$NON-NLS-0$
-					"input": "combo", //$NON-NLS-1$ //$NON-NLS-0$
-					"values": [{ //$NON-NLS-0$
-						"label": messages["Normal"] //$NON-NLS-0$
-					},
-					{
-						"label": messages["Bold"] //$NON-NLS-0$
-					}],
-					"setting": messages['Normal'] //$NON-NLS-0$
-				}]
-			},
-			{
-				"ui": messages["Comments"], //$NON-NLS-0$
-				"label": messages["Comment Types"], //$NON-NLS-0$
-				"items": [{ //$NON-NLS-0$
-					"ui": messages['Color'], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": messages["green"] //$NON-NLS-0$
-				},
-				{
-					"ui": messages['Weight'], //$NON-NLS-0$
-					"label": messages['Weight'], //$NON-NLS-0$
-					"input": "combo", //$NON-NLS-1$ //$NON-NLS-0$
-					"values": [{ //$NON-NLS-0$
-						"label": messages['Normal'] //$NON-NLS-0$
-					},
-					{
-						"label": messages['Bold'] //$NON-NLS-0$
-					}],
-					"setting": messages['Normal'] //$NON-NLS-0$
-				}]
-			},
-			{
-				"ui": messages["Keywords"], //$NON-NLS-0$
-				"label": messages["Keyword Types"], //$NON-NLS-0$
-				"items": [{ //$NON-NLS-0$
-					"ui": messages['Color'], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": messages["darkred"] //$NON-NLS-0$
-				},
-				{
-					"label": messages['Weight'], //$NON-NLS-0$
-					"input": "combo", //$NON-NLS-1$ //$NON-NLS-0$
-					"values": [{ //$NON-NLS-0$
-						"label": messages['Normal'] //$NON-NLS-0$
-					},
-					{
-						"label": messages['Bold'] //$NON-NLS-0$
-					}],
-					"setting": messages['Bold'] //$NON-NLS-0$
-				}]
-			},
-			{
-				"ui": 'Annotations Ruler',  //$NON-NLS-0$
-				"label":'Annotations Ruler', //$NON-NLS-0$
-				"items": [{
-					"ui": messages["Color"], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "lightgrey" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Background"], //$NON-NLS-0$
-					"label": messages['Background'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				}
-				]
-			},
-			{
-				"ui": 'Folding Ruler',  //$NON-NLS-0$
-				"label":'Folding Ruler', //$NON-NLS-0$
-				"items": [{
-					"ui": messages["Color"], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#000000" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Background"], //$NON-NLS-0$
-					"label": messages['Background'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				}
-				]
-			},
-			{
-				"ui": 'Overview Ruler',  //$NON-NLS-0$
-				"label":'Overview Ruler', //$NON-NLS-0$
-				"items": [{
-					"ui": messages["Color"], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Background"], //$NON-NLS-0$
-					"label": messages['Background'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				}
-				]
-			},
-			{
-				"ui": 'Line Number Ruler',  //$NON-NLS-0$
-				"label":'Line Number Ruler', //$NON-NLS-0$
-				"items": [
-				
-				/* Don't think this is necessary {
-					"ui": messages["Color"], //$NON-NLS-0$
-					"label": messages['Color'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": messages["Background"], //$NON-NLS-0$
-					"label": messages['Background'], //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				},*/
-				{
-					"ui": 'Even Rows Color', //$NON-NLS-0$
-					"label": 'Even Rows Color', //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#444" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": 'Even Rows Background', //$NON-NLS-0$
-					"label": 'Even Rows Background', //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": 'Odd Rows Color', //$NON-NLS-0$
-					"label": 'Odd Rows Color', //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#444" //$NON-NLS-1$ //$NON-NLS-0$
-				},
-				{
-					"ui": 'Odd Rows Background', //$NON-NLS-0$
-					"label":'Odd Rows Background', //$NON-NLS-0$
-					"input": "color", //$NON-NLS-1$ //$NON-NLS-0$
-					"setting": "#FFFFFF" //$NON-NLS-1$ //$NON-NLS-0$
-				}
-				]
-			}
-			
-			]
-		}]
-
+		initialSettings: []
 	});
 });
