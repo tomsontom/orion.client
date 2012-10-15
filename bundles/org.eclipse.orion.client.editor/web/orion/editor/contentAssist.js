@@ -408,14 +408,23 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 			var node;
 			if (proposal.style === "hr") {
 				node = document.createElement("hr");
+				div.appendChild(node, div);
+			} else if( proposal.style === "html" ) {
+				div.className = this.calculateClasses(proposal.style, isSelected);
+				if (isSelected) {
+					this.parentNode.setAttribute("aria-activedescendant", div.id);
+				}
+				
+				div.innerHTML = this.getDisplayString(proposal);
 			} else {
 				div.className = this.calculateClasses(proposal.style, isSelected);
 				node = document.createTextNode(this.getDisplayString(proposal));
 				if (isSelected) {
 					this.parentNode.setAttribute("aria-activedescendant", div.id);
 				}
+				div.appendChild(node, div);
 			}
-			div.appendChild(node, div);
+			
 			parent.appendChild(div);
 		},
 		/** @private */
