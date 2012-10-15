@@ -131,14 +131,21 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 				return false;
 			}
 			var offset = this.textView.getCaretOffset();
+			var start = offset;
+			var end = offset;
+			
+			if( proposal.replace ) {
+			   start = this.getPrefixStart(offset);
+			}
+			
 			var data = {
 				proposal: proposal,
-				start: offset,
-				end: offset
+				start: start,
+				end: end
 			};
 			this.setState(State.INACTIVE);
 			var proposalText = proposal.proposal || proposal;
-			this.textView.setText(proposalText, offset, offset);
+			this.textView.setText(proposalText, start, end);
 			this.dispatchEvent({type: "ProposalApplied", data: data});
 			return true;
 		},
