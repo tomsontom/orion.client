@@ -416,6 +416,47 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 			if (proposal.style === "hr") {
 				node = document.createElement("hr");
 				div.appendChild(node, div);
+			} else if( proposal.style === "attributedString" ) {
+				div.className = this.calculateClasses(proposal.style, isSelected);
+				if (isSelected) {
+					this.parentNode.setAttribute("aria-activedescendant", div.id);
+				}
+				
+				var contentDiv = document.createElement("div");
+				var nobr = document.createElement("nobr");
+				contentDiv.appendChild(nobr);
+				var contentNode = nobr;
+				if( proposal.description ) {
+					if( proposal.description.styleClass ) {
+						contentDiv.className = proposal.description.styleClass;
+					}
+					
+					if( proposal.description.segments ) {
+						proposal.description.segments.forEach( function(segment) {
+							var itemNode = document.createElement("span");
+							var styleString = "";
+							
+							if( segment.style ) {
+								if( segment.style.bold ) {
+									styleString += "font-weight: bold;";
+								} else if(segment.style.italic) {
+									styleString += "font-style: italic;";
+								} else if(segment.style.color != null) {
+									styleString += "color: " + segment.style.color + ";";
+								} else if(segment.style.fontname != null) {
+									styleString += "font-name: " + segment.style.fontname + ";";
+								}
+								itemNode.style = styleString;
+							}
+							itemNode.appendChild(document.createTextNode(segment.value));
+							
+							contentNode.appendChild(itemNode);
+						} );
+						
+					}
+				}
+				
+				div.appendChild(contentDiv);
 			} else if( proposal.style === "html" ) {
 				div.className = this.calculateClasses(proposal.style, isSelected);
 				if (isSelected) {
@@ -429,7 +470,7 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 				if (isSelected) {
 					this.parentNode.setAttribute("aria-activedescendant", div.id);
 				}
-				div.appendChild(node, div);
+				div.appendChild(node);
 			}
 			
 			parent.appendChild(div);
