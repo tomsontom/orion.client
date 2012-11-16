@@ -423,8 +423,8 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 					this.parentNode.setAttribute("aria-activedescendant", div.id);
 				}
 				
-				var contentDiv = document.createElement("div");
-				var nobr = document.createElement("nobr");
+				var contentDiv = util.createElement(document, "div");
+				var nobr = util.createElement(document, "nobr");
 				contentDiv.appendChild(nobr);
 				var contentNode = nobr;
 				if( proposal.description ) {
@@ -434,7 +434,7 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 					
 					if( proposal.description.segments ) {
 						proposal.description.segments.forEach( function(segment) {
-							var itemNode = document.createElement("span");
+							var itemNode = util.createElement(document, "span");
 							var styleString = "";
 							
 							if( segment.style ) {
@@ -446,6 +446,8 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 									itemNode.style.color = segment.style.color;
 								} else if(segment.style.fontname != null) {
 									itemNode.style.fontName = segment.style.fontname;
+								} else if(segment.style.backgroundColor != null) {
+									itemNode.style.backgroundColor = segment.style.backgroundcolor;
 								}
 							}
 							itemNode.appendChild(document.createTextNode(segment.value));
