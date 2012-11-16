@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * Copyright (c) 2012 VMware, Inc.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
@@ -11,7 +11,7 @@
  *     IBM Corporation - initial API and implementation
  *     Andrew Eisenberg - rename jsContentAssist to jsTemplateContentAssist
  *******************************************************************************/
-/*global examples orion:true window define*/
+/*global window define*/
 /*jslint browser:true devel:true*/
 
 define([
@@ -119,7 +119,7 @@ function(require, mTextView, mKeyBinding, mTextStyler, mTextMateStyler, mHtmlGra
 		} else {
 			status = message;
 		}
-		document.getElementById("status").innerHTML = dirtyIndicator + status;
+		document.getElementById("status").textContent = dirtyIndicator + status;
 	};
 	
 	var editor = new mEditor.Editor({
@@ -139,7 +139,7 @@ function(require, mTextView, mKeyBinding, mTextStyler, mTextMateStyler, mHtmlGra
 		} else {
 			dirtyIndicator = "";
 		}
-		document.getElementById("status").innerHTML = dirtyIndicator + status;
+		document.getElementById("status").textContent = dirtyIndicator + status;
 	});
 	
 	editor.installTextView();

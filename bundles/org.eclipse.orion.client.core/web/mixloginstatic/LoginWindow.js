@@ -12,7 +12,7 @@
 /*jslint browser:true devel:true*/
 /*global define navigator window*/
 
-define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
+define(['domReady', 'orion/xhr', 'orion/PageUtil', 'persona/include'], function(domReady, xhr, PageUtil) {
 	var userCreationEnabled;
 	var registrationURI;
 	var forceUserEmail;
@@ -130,15 +130,15 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 		return utftext;
 	}
 
-	function showErrorMessage(html) {
-		if (typeof html !== "undefined") {
-			document.getElementById("errorMessage").innerHTML = html;
+	function showErrorMessage(msg) {
+		if (typeof msg !== "undefined") {
+			document.getElementById("errorMessage").textContent = msg;
 		}
 		document.getElementById("errorWin").style.visibility = '';
 	}
 
 	function hideErrorMessage() {
-		document.getElementById("errorMessage").innerHTML = "&nbsp;";
+		document.getElementById("errorMessage").textContent = "\u00a0";
 		document.getElementById("errorWin").style.visibility = 'hidden';
 	}
 
@@ -196,17 +196,21 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 	function finishLogin() {
 		var redirect = getRedirect();
 		if (redirect !== null) {
-			window.location = decodeURIComponent(redirect);
-		} else {
-			window.close();
+			redirect = decodeURIComponent(redirect);
+			if(PageUtil.validateURLScheme(redirect)) {
+				window.location = decodeURIComponent(redirect);
+				return;
+			}
 		}
+		window.close();
+		
 	}
 
 	function createOpenIdLink(openid) {
 		if (openid !== "" && openid !== null) {
 			var redirect = getRedirect();
-			if (redirect !== null) {
-				return "../login/openid?openid=" + encodeURIComponent(openid) + "&redirect=" + getRedirect();
+			if (redirect !== null && PageUtil.validateURLScheme(decodeURIComponent(redirect))) {
+				return "../login/openid?openid=" + encodeURIComponent(openid) + "&redirect=" + redirect;
 			} else {
 				return "../login/openid?openid=" + encodeURIComponent(openid);
 			}
@@ -355,7 +359,7 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 			document.getElementById('orionOpen').style.visibility = 'hidden';
 			document.getElementById('orionRegister').style.visibility = 'hidden';
 		
-			document.getElementById('orionLogin').style.visibility = 'hidden';
+			document.getElementById('orionLoginForm').style.visibility = 'hidden';
 			document.getElementById('orionRegister').style.visibility = 'hidden';
 			document.getElementById('newUserHeaderShown').style.visibility = '';
 			document.getElementById('create_login').focus();
@@ -367,7 +371,7 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 	}
 
 	function revealResetUser() {
-		document.getElementById('orionLogin').style.visibility = 'hidden';
+		document.getElementById('orionLoginForm').style.visibility = 'hidden';
 		if (!userCreationEnabled && !registrationURI) {
 			document.getElementById('orionRegister').style.visibility = 'hidden';
 			document.getElementById('orionReset').style.height = '212px';
@@ -378,7 +382,7 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 	}
 
 	function hideResetUser() {
-		document.getElementById('orionLogin').style.visibility = '';
+		document.getElementById('orionLoginForm').style.visibility = '';
 		document.getElementById('newUserHeaderShown').style.display = '';
 		document.getElementById('orionReset').style.visibility = 'hidden';
 	}
@@ -392,13 +396,13 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 			event.stopPropagation();
 			document.getElementById('orionOpen').style.visibility = 'hidden';
 			document.getElementById('orionRegister').style.visibility = 'hidden';		
-			document.getElementById('orionLogin').style.visibility = '';
+			document.getElementById('orionLoginForm').style.visibility = '';
 			document.getElementById("login").focus();
 		}
 	}
 	
 	function cancelLogin(){
-		document.getElementById('orionLogin').style.visibility = 'hidden';
+		document.getElementById('orionLoginForm').style.visibility = 'hidden';
 		document.getElementById('orionOpen').style.visibility = '';
 		
 		if (userCreationEnabled || registrationURI) {
@@ -437,7 +441,7 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 						formatForNoUserCreation();
 					}
 					document.getElementById("login-window").style.display = '';
-					// document.getElementById("login").focus();
+					document.getElementById("orionLogin").focus();
 				}
 			}
 		};
@@ -552,7 +556,7 @@ define(['domReady', 'orion/xhr', 'persona/include'], function(domReady, xhr) {
 		document.getElementById("googleLogin").onkeydown = googleLogin;
 		
 		document.getElementById("orionLoginLink").onclick = revealLogin;
-		document.getElementById("myopenidLogin").onkeydown = revealLogin;
+		document.getElementById("orionLogin").onkeydown = revealLogin;
 		
 		document.getElementById("personaLogin").onclick = personaLogin;
 		document.getElementById("personaLogin").onkeydown = personaLogin;

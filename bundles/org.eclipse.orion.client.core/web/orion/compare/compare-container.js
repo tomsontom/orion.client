@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -742,7 +742,7 @@ exports.TwoWayCompareContainer = (function() {
 			} else {
 				status = message;
 			}
-			dojo.byId(statusDivId).innerHTML = dirtyIndicator +  status;
+			dojo.byId(statusDivId).textContent = dirtyIndicator +  status;
 		};
 		var undoStackFactory = readOnly ? new mEditorFeatures.UndoFactory() : new mEditorCommands.UndoCommandFactory(that._registry, that._commandService, "pageActions"); //$NON-NLS-0$
 		var annotationFactory = new mEditorFeatures.AnnotationFactory();
@@ -811,8 +811,8 @@ exports.TwoWayCompareContainer = (function() {
 	TwoWayCompareContainer.prototype.destroy = function(){
 		if(this._leftTextView){
 			this._diffNavigator.destroy();
-			this._leftTextView.destroy();
-			this._rightTextView.destroy();
+			this._leftEditor.destroy();
+			this._rightEditor.destroy();
 			this._uiFactory.destroy();
 		}
 	};

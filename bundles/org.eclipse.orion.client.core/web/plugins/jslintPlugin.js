@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -217,7 +217,14 @@ define(["orion/plugin", "orion/jslintworker", "domReady!"], function(PluginProvi
 			}
 	};
 	
-	var provider = new PluginProvider();
+
+	var headers = {
+		name: "Orion JSLint Service",
+		version: "1.0",
+		description: "This plugin provides JSLint functionality for outlining and validating JavaScript code."
+	};
+
+	var provider = new PluginProvider(headers);
 	provider.registerService(["orion.edit.validator", "orion.cm.managedservice"], validationService, {
 		contentType: ["application/javascript", "text/html"],
 		pid: "jslint.config"

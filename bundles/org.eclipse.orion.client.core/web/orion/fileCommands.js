@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -67,6 +67,29 @@ define(['i18n!orion/navigate/nls/messages', "require", "dojo", "orion/uiUtils", 
 		}
 	};
 	FavoriteFoldersCache.prototype.constructor = FavoriteFoldersCache;
+	
+	/**
+	 * Uploads a file
+	 * @name orion.fileCommands#uploadFile
+	 * @function
+	 */
+	fileCommandUtils.uploadFile = function(targetFolder, file, explorer, unzip) { 
+		this.req = new XMLHttpRequest();
+		this.req.open('post', targetFolder.ImportLocation, true); //$NON-NLS-0$
+		this.req.setRequestHeader("X-Requested-With", "XMLHttpRequest"); //$NON-NLS-1$ //$NON-NLS-0$
+		this.req.setRequestHeader("Slug", file.name); //$NON-NLS-0$
+		// TODO if we want to unzip zip files, don't use this...
+		if (!unzip) {
+			this.req.setRequestHeader("X-Xfer-Options", "raw"); //$NON-NLS-1$ //$NON-NLS-0$
+		}
+		this.req.setRequestHeader("Content-Type", file.type); //$NON-NLS-0$
+		this.req.onreadystatechange = function() {
+			if (explorer) {
+				explorer.changedItem(targetFolder, true);
+			}
+		};
+		this.req.send(file);
+	};
 
 	/**
 	 * Updates the explorer tool bar
@@ -768,9 +791,9 @@ define(['i18n!orion/navigate/nls/messages', "require", "dojo", "orion/uiUtils", 
 			callback : function(data) {
 				var item = forceSingleItem(data.items);
 				var dialog = new orion.widgets.SFTPConnectionDialog({
-					func:  function(host,path,user,password, overwriteOptions){
+					func:  function(host,port,path,user,password, overwriteOptions){
 						var optionHeader = overwriteOptions ? "sftp,"+overwriteOptions : "sftp"; //$NON-NLS-1$ //$NON-NLS-0$
-						var importOptions = {"OptionHeader":optionHeader,"Host":host,"Path":path,"UserName":user,"Passphrase":password}; //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+						var importOptions = {"OptionHeader":optionHeader,"Host":host,"Port":port,"Path":path,"UserName":user,"Passphrase":password}; //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 						var deferred = fileClient.remoteImport(item.ImportLocation, importOptions);
 						progressService.showWhile(deferred, dojo.string.substitute(messages["Importing from ${0}"], [host])).then(
 							dojo.hitch(explorer, function() {

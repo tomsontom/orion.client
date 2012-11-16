@@ -21,7 +21,6 @@ define(['i18n!orion/operations/nls/messages', 'require', 'dojo', 'dijit', 'dijit
 		constructor : function() {
 			this.inherited(arguments);
 			this.options = arguments[0] || {};
-			this._operations = [];
 			this._myOperations = [];
 		},
 		postCreate: function(){
@@ -29,19 +28,12 @@ define(['i18n!orion/operations/nls/messages', 'require', 'dojo', 'dijit', 'dijit
 			this.allOperationsLink.href = require.toUrl("operations/list.html"); //$NON-NLS-0$
 			this._setOperationsVisibility();
 		},
-		setOperations: function(operations, myOperations){
-			this._operations = [];
-			myOperations = myOperations || {};
+		setOperations: function(operations){
 			this._myOperations = [];
 			if(operations.Children)
 				for(var i=0; i<operations.Children.length; i++){
-					if(myOperations[operations.Children[i].Id]){
-						this._myOperations.push(operations.Children[i]);
-					} else {
-						this._operations.push(operations.Children[i]);
-					}
+					this._myOperations.push(operations.Children[i]);
 				}
-			this._operations.sort(function(op1, op2){return parseInt(op2.Modified) - parseInt(op1.Modified);});
 			this._myOperations.sort(function(op1, op2){return parseInt(op2.Modified) - parseInt(op1.Modified);});
 			this._renderOperations();
 		},
@@ -65,16 +57,17 @@ define(['i18n!orion/operations/nls/messages', 'require', 'dojo', 'dijit', 'dijit
 		},
 		_renderOperations: function(){
 			this._renderOperationsTable(this.myOperationsList, this._myOperations);
-			this._renderOperationsTable(this.operationsList, this._operations);
 		},
 		_renderOperationsTable: function(operationsTable, operations){
 			dojo.empty(operationsTable);
 			for(var i=0; i<operations.length; i++){
 				var operation = operations[i];
 				var tr = dojo.create("tr"); //$NON-NLS-0$
-				var col = dojo.create("td", {style: "padding-left: 5px; padding-right: 5px", innerHTML: operation.Name}, tr); //$NON-NLS-1$ //$NON-NLS-0$
+				var col = dojo.create("td", {style: "padding-left: 5px; padding-right: 5px"}, tr); //$NON-NLS-1$ //$NON-NLS-0$
+				col.textContent = operation.Name;
 				var div = dojo.create("div", null, col, "only"); //$NON-NLS-1$ //$NON-NLS-0$
-				var link = dojo.create("span", {innerHTML: operation.Name, className: "primaryColumn"}, div, "last"); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+				var link = dojo.create("span", {className: "primaryColumn"}, div, "last"); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+				link.textContent = operation.Name;
 
 				dojo.place(document.createTextNode(operation.Name), link, "only"); //$NON-NLS-0$
 				
@@ -117,8 +110,8 @@ define(['i18n!orion/operations/nls/messages', 'require', 'dojo', 'dijit', 'dijit
 					if(result.DetailedMessage && result.DetailedMessage!=="")
 						message += ": " + result.DetailedMessage; //$NON-NLS-0$
 					dojo.create("br", null, div, "last"); //$NON-NLS-1$ //$NON-NLS-0$
-					dojo.create("span", {className: "secondaryColumn", style: "margin-left: 18px;", innerHTML: message}, div, "last"); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
-					
+					var span = dojo.create("span", {className: "secondaryColumn", style: "margin-left: 18px;"}, div, "last"); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+					span.textContent = message;
 				}
 				
 				dojo.place(tr, operationsTable, "last"); //$NON-NLS-0$
@@ -126,12 +119,10 @@ define(['i18n!orion/operations/nls/messages', 'require', 'dojo', 'dijit', 'dijit
 			this._setOperationsVisibility();
 		},
 		_setOperationsVisibility: function(){			
-			this.operationsList.style.display = this._operations.length > 0 ? "" : "none"; //$NON-NLS-0$
-			this.otherOperations.style.display  = this._operations.length > 0 ? "" : "none"; //$NON-NLS-0$
 			this.myOperationsList.style.display = this._myOperations.length > 0 ? "" : "none"; //$NON-NLS-0$
 			this.myOperationsListEmpty.style.display = this._myOperations.length > 0 ? "none" : ""; //$NON-NLS-0$
-			this.operationsDontExist.style.display = this._operations.length + this._myOperations.length > 0 ? "none": ""; //$NON-NLS-0$
-			this.operationsExist.style.display = this._operations.length + this._myOperations.length > 0 ? "" : "none"; //$NON-NLS-0$
+			this.operationsDontExist.style.display = this._myOperations.length > 0 ? "none": ""; //$NON-NLS-0$
+			this.operationsExist.style.display = this._myOperations.length > 0 ? "" : "none"; //$NON-NLS-0$
 		},
 		_onBlur: function(){
 			this.inherited(arguments);

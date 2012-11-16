@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -56,9 +56,12 @@ define(["orion/Deferred", "orion/plugin", "plugins/filePlugin/fileImpl", "domRea
 	temp.href = "../mixloginstatic/LoginWindow.html";
 	var login = temp.href;
 	var headers = {
-		"login": login
+		name: "Orion File Service",
+		version: "1.0",
+		description: "This plugin provides file access to a user's workspace.",
+		login: login
 	};
-	
+
 	var provider = new PluginProvider(headers);
 
 	temp.href = "../file";

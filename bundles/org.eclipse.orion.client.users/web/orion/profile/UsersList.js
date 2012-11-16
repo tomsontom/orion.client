@@ -125,22 +125,26 @@ eclipse.UsersRenderer = (function() {
 	UsersRenderer.prototype = new mExplorer.SelectionRenderer();
 	
 	UsersRenderer.prototype.getCellHeaderElement = function(col_no){
-		
+		var col = dojo.create("th"); //$NON-NLS-0$
+		var h2 = dojo.create("h2", null, col); //$NON-NLS-0$
 		switch(col_no){
 		case 0: 
-			return dojo.create("th", {innerHTML: "<h2>"+messages["Login"]+"</h2>"}); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			h2.textContent = messages["Login"];
+			return col;
 		case 1:
-			return dojo.create("th", {innerHTML: "<h2>"+messages["Actions"]+"</h2>"}); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			h2.textContent = messages["Actions"];
+			return col;
 		case 2:
-			return dojo.create("th", {innerHTML: "<h2>"+messages["Name"]+"</h2>"}); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			h2.textContent = messages["Name"];
+			return col;
 		case 3:
-			return dojo.create("th", {innerHTML: "<h2>"+messages["Last Login"]+"</h2>"}); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			h2.textContent = messages["Last Login"];
+			return col;
 		}
-		
 	};
 	
 	UsersRenderer.prototype.getCellElement = function(col_no, item, tableRow){
-		
+		var td;
 		switch(col_no){
 		case 0:
 			
@@ -155,9 +159,13 @@ eclipse.UsersRenderer = (function() {
 		case 1:
 			return this.getActionsColumn(item, tableRow, null, null, true);
 		case 2:
-			return dojo.create("td", {innerHTML: item.Name ? item.Name : "&nbsp;"}); //$NON-NLS-1$ //$NON-NLS-0$
+			td = dojo.create("td"); //$NON-NLS-0$
+			td.textContent = item.Name ? item.Name : " "; //$NON-NLS-0$
+			return td;
 		case 3:
-			return dojo.create("td", {innerHTML: item.LastLogInTimestamp ? dojo.date.locale.format(new Date(parseInt(item.LastLogInTimestamp, 10)), {formatLength: "short"}) : '&nbsp;'}); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			td = dojo.create("td"); //$NON-NLS-0$
+			td.textContent = item.LastLogInTimestamp ? dojo.date.locale.format(new Date(parseInt(item.LastLogInTimestamp, 10)), {formatLength: "short"}) : '\u00a0'; //$NON-NLS-1$ //$NON-NLS-0$
+			return td;
 		}
 		
 	};
@@ -187,38 +195,43 @@ eclipse._UsersList = (function() {
 				var thead = dojo.create("thead"); //$NON-NLS-0$
 				var titleRow = dojo.create("tr", {"class": "domCommandBackground"}, thead); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 
-				dojo.create("td", { //$NON-NLS-0$
-					innerHTML : "<h2>"+messages['Login']+"</h2>", //$NON-NLS-1$ //$NON-NLS-0$
+				var loginTd = dojo.create("td", { //$NON-NLS-0$
 					className : "usersTable" //$NON-NLS-0$
 				}, titleRow);
-				dojo.create("td", { //$NON-NLS-0$
-					innerHTML : "<h2>"+messages['Actions']+"</h2>", //$NON-NLS-1$ //$NON-NLS-0$
-					className : "usersTable" //$NON-NLS-0$
-				}, titleRow);
-				dojo.create("td", { //$NON-NLS-0$
-					innerHTML : "<h2>"+messages['Name']+"</h2>", //$NON-NLS-1$ //$NON-NLS-0$
-					className : "usersTable" //$NON-NLS-0$
-				}, titleRow);
-				dojo.create("td", { //$NON-NLS-0$
-					innerHTML : "<h2>"+messages['Last Login']+"</h2>", //$NON-NLS-1$ //$NON-NLS-0$
-					className : "usersTable" //$NON-NLS-0$
-				}, titleRow);
+				var loginH2 = dojo.create("h2", null, loginTd); //$NON-NLS-0$
+				loginH2.textContent = messages['Login'];
 
+				var actionsTd = dojo.create("td", { //$NON-NLS-0$
+					className : "usersTable" //$NON-NLS-0$
+				}, titleRow);
+				var actionsH2 = dojo.create("h2", null, actionsTd); //$NON-NLS-0$
+				actionsH2.textContent = messages['Actions'];
+
+				var nameTd = dojo.create("td", { //$NON-NLS-0$
+					className : "usersTable" //$NON-NLS-0$
+				}, titleRow);
+				var nameH2 = dojo.create("h2", null, nameTd); //$NON-NLS-0$
+				nameH2.textContent = messages['Name'];
+
+				var lastLoginTd = dojo.create("td", { //$NON-NLS-0$
+					className : "usersTable" //$NON-NLS-0$
+				}, titleRow);
+				var lastLoginH2 = dojo.create("h2", null, lastLoginTd); //$NON-NLS-0$
+				lastLoginH2.textContent = messages['Last Login'];
 
 				dojo.place(thead, table);
 				dojo.place(table, this.parent);
 				
 				var tbody = dojo.create("tbody", null, table); //$NON-NLS-0$
-
+				var userLoginCell, userNameCell;
 				for ( var i in jsonData.users) {
 					var userRow = dojo.create("tr", {"class": i%2===0 ? "treeTableRow lightTreeTableRow" : "treeTableRow darkTreeTableRow"}); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 					dojo.connect(userRow, "onmouseover", dojo.hitch(this, function(i){document.getElementById("usersActions"+i).style.visibility="";}, i)); //$NON-NLS-1$ //$NON-NLS-0$
 					dojo.connect(userRow, "onmouseout", dojo.hitch(this, function(i){document.getElementById("usersActions"+i).style.visibility="hidden";}, i)); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
-					dojo.create("td", { //$NON-NLS-0$
-						innerHTML : this
-								.getUserTab(jsonData.users[i].login, jsonData.users[i].Location),
-								className : "usersTable" //$NON-NLS-0$
-					}, userRow);
+					userLoginCell = dojo.create("td", { //$NON-NLS-0$
+						className : "usersTable"
+					}, userRow); //$NON-NLS-1$
+					dojo.place(this.getUserTab(jsonData.users[i].login, jsonData.users[i].Location), userLoginCell);
 					var actionsTd = dojo.create("td", {className: "usersTable secondaryColumn"}); //$NON-NLS-1$ //$NON-NLS-0$
 					var actions = dojo.create("span",{id: "usersActions"+i, style: "visibility: hidden"}, actionsTd); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 					var deleteAction = dojo.create("img", { //$NON-NLS-0$
@@ -236,21 +249,22 @@ eclipse._UsersList = (function() {
 								this.deleteUser(login, location);
 							}, jsonData.users[i].login, jsonData.users[i].Location));
 					dojo.place(actionsTd, userRow);
-					dojo.create("td", { //$NON-NLS-0$
-						innerHTML : jsonData.users[i].Name ? jsonData.users[i].Name : '&nbsp;', //$NON-NLS-0$
+					userNameCell = dojo.create("td", { //$NON-NLS-0$
 						className: "usersTable secondaryColumn" //$NON-NLS-0$
 					}, userRow);
-					dojo.create("td", { //$NON-NLS-0$
-						innerHTML : jsonData.users[i].LastLogInTimestamp ? dojo.date.locale.format(new Date(parseInt(jsonData.users[i].LastLogInTimestamp, 10)), {formatLength: "short"}) : '&nbsp;', //$NON-NLS-1$ //$NON-NLS-0$
+					userNameCell.textContent = jsonData.users[i].Name ? jsonData.users[i].Name : ' '; //$NON-NLS-0$
+					var lastLoginCell = dojo.create("td", { //$NON-NLS-0$
 						className: "usersTable secondaryColumn" //$NON-NLS-0$
 					}, userRow);
+					lastLoginCell.textContent = jsonData.users[i].LastLogInTimestamp ? dojo.date.locale.format(new Date(parseInt(jsonData.users[i].LastLogInTimestamp, 10)), {formatLength: "short"}) : '\u00a0'; //$NON-NLS-1$ //$NON-NLS-0$
 					dojo.place(userRow, tbody);
 				}
 			}));
 		},
 		getUserTab : function(userName, userLocation) {
-			return "<a class=\"navlinkonpage\" href=\"" + require.toUrl("profile/user-profile.html") + "#" + userLocation //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
-					+ "\">" + userName + "</a>"; //$NON-NLS-1$ //$NON-NLS-0$
+			var a = dojo.create("a", {className: "navlinkonpage", href: require.toUrl("profile/user-profile.html") + "#" + userLocation}); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+			a.textContent = userName;
+			return a;
 		},
 		reloadUsers : function() {
 			dojo.html._emptyNode(this.parent);

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -144,9 +144,58 @@ exports.EditorCommandFactory = (function() {
 					callback: function(data) {
 						data.items.getTextView().invokeAction("save"); //$NON-NLS-0$
 					}});
+					
+				
+					
 				this.commandService.addCommand(saveCommand);
 				this.commandService.registerCommandContribution(this.toolbarId, "orion.save", 1, null, false, new mCommands.CommandKeyBinding('s', true)); //$NON-NLS-1$ //$NON-NLS-0$
+				
+				
+				if( document.webkitCancelFullScreen || document.mozCancelFullScreen ){
+				
+					editor.getTextView().setAction("fullscreen", dojo.hitch(this, function (){ 
+						var element = document.getElementById('innerPanels'); 
+						
+						if( element.webkitRequestFullScreen ){
+							element.webkitRequestFullScreen(); 
+						}else if( element.mozRequestFullScreen ){
+							element.mozRequestFullScreen(); 
+						}
+					}));
+						
+				    editor.getTextView().setAction("normalscreen", dojo.hitch(this, function (){ 
+						var element = document.getElementById('innerPanels');
+						if( document.webkitCancelFullScreen ){
+							document.webkitCancelFullScreen(); 
+						}else if( document.mozCancelFullScreen ){
+							document.mozCancelFullScreen();
+						}
+					}));
 	
+					
+					var fullScreenCommand = new mCommands.Command({
+					
+						name: 'Fullscreen',
+						tooltip: 'Edit in full screen mode',
+						id: "orion.fullscreen",
+						callback: function(data){
+						
+							if( data.domNode.innerHTML === 'Fullscreen' ){
+								data.domNode.innerHTML = 'Exit Fullscreen';
+								data.items.getTextView().invokeAction("fullscreen");
+							}else{
+								data.domNode.innerHTML = 'Fullscreen';
+								
+								data.items.getTextView().invokeAction("normalscreen");
+							}
+						}
+					});
+					
+					this.commandService.addCommand(fullScreenCommand);
+					this.commandService.registerCommandContribution(this.toolbarId, "orion.fullscreen", 1, null, false, new mCommands.CommandKeyBinding('u', true)); //$NON-NLS-1$ //$NON-NLS-0$
+	
+				}
+		
 				// page navigation commands (go to line)
 				var lineParameter = new mCommands.ParametersDescription([new mCommands.CommandParameter('line', 'number', 'Line:')], {hasOptionalParameters: false}, //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 																		function() {
@@ -370,24 +419,20 @@ exports.UndoCommandFactory = (function() {
 				name: messages['Undo'],
 				id: "orion.undo", //$NON-NLS-0$
 				callback: function(data) {
-					data.items.getTextView().invokeAction("undo");
+					data.items.getTextView().invokeAction("undo"); //$NON-NLS-0$
 				}});
-			editor.getTextView().setKeyBinding(new mKeyBinding.KeyBinding('z', true), "undo"); //$NON-NLS-1$ //$NON-NLS-0$
 			editor.getTextView().setAction("undo", function() { //$NON-NLS-0$
 				undoStack.undo();
 				return true;
 			}, undoCommand);
 			this.commandService.addCommand(undoCommand);
 			
-			var isMac = navigator.platform.indexOf("Mac") !== -1; //$NON-NLS-0$
-			var binding = isMac ? new mKeyBinding.KeyBinding('z', true, true) : new mKeyBinding.KeyBinding('y', true); //$NON-NLS-1$ //$NON-NLS-0$
 			var redoCommand = new mCommands.Command({
 				name: messages['Redo'],
 				id: "orion.redo", //$NON-NLS-0$
 				callback: function(data) {
 					data.items.getTextView().invokeAction("redo"); //$NON-NLS-0$
 				}});
-			editor.getTextView().setKeyBinding(binding, "redo"); //$NON-NLS-0$
 			editor.getTextView().setAction("redo", function() { //$NON-NLS-0$
 				undoStack.redo();
 				return true;
@@ -395,8 +440,8 @@ exports.UndoCommandFactory = (function() {
 	
 			this.commandService.addCommand(redoCommand);
 	
-			this.commandService.registerCommandContribution(this.toolbarId, "orion.undo", 400, null, true, new mCommands.CommandKeyBinding('z', true)); //$NON-NLS-1$ //$NON-NLS-0$
-			this.commandService.registerCommandContribution(this.toolbarId, "orion.redo", 401, null, true, binding); //$NON-NLS-0$
+			this.commandService.registerCommandContribution(this.toolbarId, "orion.undo", 400, null, true, editor.getTextView().getKeyBindings("undo")[0]); //$NON-NLS-1$ //$NON-NLS-0$
+			this.commandService.registerCommandContribution(this.toolbarId, "orion.redo", 401, null, true, editor.getTextView().getKeyBindings("redo")[0]); //$NON-NLS-1$ //$NON-NLS-0$
 
 			return undoStack;
 		}

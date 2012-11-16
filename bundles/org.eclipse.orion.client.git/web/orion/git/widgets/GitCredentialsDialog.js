@@ -1,6 +1,6 @@
 /******************************************************************************* 
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -76,7 +76,7 @@ dojo.declare("orion.git.widgets.GitCredentialsDialog", [dijit.Dialog, orion.widg
 		}
 		if(this.options.errordata && this.options.errordata.Url){
 			dojo.style(this.gitCredentialsLabel, "display", "block"); //$NON-NLS-1$ //$NON-NLS-0$
-			this.url.innerHTML = this.options.errordata.Url;
+			this.url.textContent = this.options.errordata.Url;
 		}
 		if(this.options.errordata && this.options.errordata.User && this.options.errordata.User!==""){
 			 this.gitSshUsername.value = this.options.errordata.User;
@@ -127,7 +127,7 @@ dojo.declare("orion.git.widgets.GitCredentialsDialog", [dijit.Dialog, orion.widg
 	execute: function() {
 		var self = this;
 		var loadedPrivateKey = this.gitPrivateKey.value;
-		var repository = this.url.innerHTML;
+		var repository = this.url.textContent;
 		
 		var process = function(pKey){
 			if(self._sshService){

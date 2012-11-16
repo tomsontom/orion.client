@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -13,9 +13,9 @@
 /*browser:true*/
 
 define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTMLFragments', 'orion/commands', 'orion/parameterCollectors', 
-	'orion/extensionCommands', 'orion/uiUtils', 'orion/textview/keyBinding', 'orion/breadcrumbs', 'orion/splitter', 'orion/favorites', 'orion/contentTypes', 'orion/URITemplate', 'orion/PageUtil', 'orion/widgets/themes/container/ThemeSheetWriter', 'orion/searchUtils', 'orion/inputCompletion/inputCompletion', "orion/Deferred",
+	'orion/extensionCommands', 'orion/uiUtils', 'orion/textview/keyBinding', 'orion/breadcrumbs', 'orion/splitter', 'orion/favorites', 'orion/contentTypes', 'orion/URITemplate', 'orion/PageUtil', 'orion/widgets/themes/container/ThemeSheetWriter', 'orion/searchUtils', 'orion/inputCompletion/inputCompletion', 'orion/globalSearch/advSearchOptContainer', "orion/Deferred",
 	'dojo/DeferredList', 'dijit/Menu', 'dijit/MenuItem', 'dijit/form/DropDownButton', 'orion/widgets/OpenResourceDialog', 'orion/widgets/UserMenu', 'orion/widgets/UserMenuDropDown'], 
-        function(messages, require, dojo, dijit, commonHTML, mCommands, mParameterCollectors, mExtensionCommands, mUIUtils, mKeyBinding, mBreadcrumbs, mSplitter, mFavorites, mContentTypes, URITemplate, PageUtil, ThemeSheetWriter, mSearchUtils, mInputCompletion, Deferred){
+        function(messages, require, dojo, dijit, commonHTML, mCommands, mParameterCollectors, mExtensionCommands, mUIUtils, mKeyBinding, mBreadcrumbs, mSplitter, mFavorites, mContentTypes, URITemplate, PageUtil, ThemeSheetWriter, mSearchUtils, mInputCompletion, mAdvSearchOptContainer, Deferred){
 
 	/**
 	 * This class contains static utility methods. It is not intended to be instantiated.
@@ -60,10 +60,11 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 			if (authService !== null) {
 				authService.getUser().then(function(jsonData){
 					if( jsonData.Name ){
-						dropdown.set( 'label', jsonData.Name ); //$NON-NLS-0$
+						//dropdown.set( 'label', jsonData.Name ); //$NON-NLS-0$
+						dropdown.containerNode.textContent = jsonData.Name;
 					}else if( jsonData.login ){
-						dropdown.set( 'label', jsonData.login ); //$NON-NLS-0$
-					}						
+						dropdown.containerNode.textContent = jsonData.login;
+					} 
 				});
 			}
 		}
@@ -139,81 +140,31 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 		
 	}
 	
-	function _addSearchPopUp(mainMenu, popUpLabel, serviceRegistry, type, makeLabelFunc){
-		var choicesMenu = new dijit.Menu({
-			style: "display: none;" //$NON-NLS-0$
-		});
-		var popup = new dijit.PopupMenuItem({
-			label: popUpLabel,
-			popup: choicesMenu
-		});
-		mainMenu.addChild(popup);
-		mSearchUtils.populateSearchMenu(serviceRegistry, choicesMenu, type, function(theSearch){
-			return makeLabelFunc(theSearch);
-		});
-		dojo.connect(mainMenu, "_openPopup", popup, function(event) { //$NON-NLS-0$
-			mSearchUtils.populateSearchMenu(serviceRegistry, choicesMenu, type, function(theSearch){
-				return makeLabelFunc(theSearch);
-			});
-		});
+	function createSearchLink(query, name) {
+		var link = document.createElement("a"); //$NON-NLS-0$
+		link.href = require.toUrl("search/search.html") + "#" + query; //$NON-NLS-1$ //$NON-NLS-0$
+		link.textContent = name;
+		return link;
 	}
 		
-	function _addSearchOptions(serviceRegistry, commandService, searcher, openInNewTab) {
-		var optionMenu = dijit.byId("searchOptionsDropDown"); //$NON-NLS-0$
-		if (optionMenu) {
-			optionMenu.destroy();
-		}
-		var newMenu = new dijit.Menu({
-			style: "display: none;padding:0px;border-radius:3px;", //$NON-NLS-0$
-			id : "searchOptionsMenu" //$NON-NLS-0$
+	function _addAdvancedSearchButton(container) {
+		var dropDownImage = dojo.create("span", {id: "advancedSearchDropDown"}, "searchOptions", "last"); //$NON-NLS-1$ //$NON-NLS-0$
+		dropDownImage.tabIndex = 0;
+		dojo.addClass(dropDownImage, "advancedSearchDecorationSprite");
+		dojo.addClass(dropDownImage, "core-sprite-openarrow");
+		dropDownImage.title = "advanced search";
+		dropDownImage.onclick = function(evt) {
+			container.toggle();
+		};
+		dropDownImage.addEventListener("keydown", function(e) { //$NON-NLS-0$
+			var keyCode= e.charCode || e.keyCode;
+			if (keyCode === 13 ) {// ENTER
+				container.toggle();
+			} 
 		});
-		dojo.addClass(newMenu.domNode, "commandMenu"); //$NON-NLS-0$
-		
-		newMenu.addChild(new dijit.CheckedMenuItem({
-			label: messages["Open in new tab"],
-			checked: openInNewTab,
-			onChange : function(checked) {
-				mSearchUtils.setOpenSearchPref(serviceRegistry, checked);
-			}
-		}));
-		newMenu.addChild(new dijit.MenuSeparator());
-		
-		newMenu.addChild(new dijit.CheckedMenuItem({
-			label: messages["Regular expression"],
-			checked: false,
-			onChange : function(checked) {
-				searcher.useRegEx = checked;
-			}
-		}));
-		newMenu.addChild(new dijit.MenuSeparator());
-		
-		//Add the recent searches as popups
-		_addSearchPopUp(newMenu,  messages["Recent searches"], serviceRegistry, "recentSearch", function(theSearch){
-			var query = searcher.createSearchQuery(theSearch.name, false, null, false, null, theSearch.regEx);
-			return "<a href='"+require.toUrl("search/search.html") +  "#" + query + "'>" + theSearch.name+"</a>"; //$NON-NLS-4$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
-		});
-		//Add the saved searches as popups
-		_addSearchPopUp(newMenu,  messages["Saved searches"], serviceRegistry, "search", function(theSearch){
-			return "<a href='"+require.toUrl("search/search.html") +  "#" + theSearch.query + "'>" + theSearch.name+"</a>"; //$NON-NLS-4$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
-		});
-		
-		var menuButton = new orion.widgets.UserMenuDropDown({
-			label : messages["Search options"],
-			showLabel: false,
-			id : "searchOptionsDropDown", //$NON-NLS-0$
-			dropDown : newMenu
-		});
-		if(menuButton.valueNode) {  // accessibility, remove value node so screen reader does not stop there.
-			dojo.destroy(menuButton.valueNode);
-		}
-		if(menuButton.titleNode && dojo.attr(menuButton.titleNode, "title")) { //$NON-NLS-0$
-			dojo.removeAttr(menuButton.titleNode, "title"); //$NON-NLS-0$
-		}
-
-		dojo.addClass(menuButton.domNode, "bannerMenu"); //$NON-NLS-0$
-		dojo.addClass(menuButton.domNode, "bannerMenuSearchOptions"); //$NON-NLS-0$
-		dojo.place(menuButton.domNode, "searchOptions", "last"); //$NON-NLS-1$ //$NON-NLS-0$
+		dojo.addClass(dropDownImage, "bannerMenuSearchOptions"); //$NON-NLS-0$
 	}
+	
 	// Related links menu management.  The related drop down widget and its associated dropdown menu
 	// are created when needed.  The links menu is reused as content changes.  If the links menu becomes
 	// empty, we hide the dropdown.
@@ -485,9 +436,9 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 		var dirty = dojo.byId("dirty"); //$NON-NLS-0$f
 		if (dirty) {
 			if (isDirty) {
-				dirty.innerHTML = "*"; //$NON-NLS-0$
+				dirty.textContent = "*"; //$NON-NLS-0$
 			} else {
-				dirty.innerHTML = ""; //$NON-NLS-0$
+				dirty.textContent = ""; //$NON-NLS-0$
 			}
 		}
 	}
@@ -730,6 +681,7 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 				require(['i18n!'+info.nls], function(commandMessages){
 					var uriTemplate = new URITemplate(info.uriTemplate);
 					var expandedHref = window.decodeURIComponent(uriTemplate.expand(locationObject));
+					expandedHref = PageUtil.validateURLScheme(expandedHref);
 					var link = dojo.create("a", {href: expandedHref, target: target, 'class':'targetSelector'}, primaryNav, "last"); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 					text = document.createTextNode(info.nameKey? commandMessages[info.nameKey]: info.name);
 					dojo.place(text, link, "only"); //$NON-NLS-0$
@@ -737,6 +689,7 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 			} else if (info.uriTemplate && info.name) {
 					var uriTemplate = new URITemplate(info.uriTemplate);
 					var expandedHref = window.decodeURIComponent(uriTemplate.expand(locationObject));
+					expandedHref = PageUtil.validateURLScheme(expandedHref);
 					var link = dojo.create("a", {href: expandedHref, target: target, 'class':'targetSelector'}, primaryNav, "last"); //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 					text = document.createTextNode(info.name);
 					dojo.place(text, link, "only"); //$NON-NLS-0$
@@ -750,18 +703,25 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 		if (!searchField) {
 			throw "failed to generate HTML for banner"; //$NON-NLS-0$
 		}
+		var advSearchOptContainer = new mAdvSearchOptContainer.advSearchOptContainer(searchField, searcher, serviceRegistry,
+									{group: "advancedSearch"});//$NON-NLS-0$
 		//Required. Reading recent&saved search from user preference. Once done call the uiCallback
 		var defaultProposalProvider = function(uiCallback){
-			mSearchUtils.getMixedSearches(serviceRegistry, true, function(searches){
-				var i, fullSet = [], hasSavedSearch = false;
+			mSearchUtils.getMixedSearches(serviceRegistry, true, false, function(searches){
+				var i, fullSet = [], hasSavedSearch = false, hasRecentSearch = false;
 				for (i in searches) {
-					if(searches[i].label){
+					if(searches[i].label && searches[i].value){
 						if(!hasSavedSearch){
-							fullSet.push({type: "category", label: "Saved searches"});//$NON-NLS-0$ //$NON-NLS-0$
+							fullSet.push({type: "category", label: messages["Saved searches"]});//$NON-NLS-0$
 							hasSavedSearch = true;
 						}
-						fullSet.push({type: "proposal", label: searches[i].label, value: searches[i].name});//$NON-NLS-0$
+						fullSet.push({type: "proposal", value: {name: searches[i].label, value: require.toUrl("search/search.html") + "#" + searches[i].value, type: "link"}});
+						//fullSet.push({type: "proposal", label: searches[i].label, value: searches[i].name});//$NON-NLS-0$
 					} else {
+						if(!hasRecentSearch){
+							fullSet.push({type: "category", label: messages["Recent searches"]});//$NON-NLS-0$
+							hasRecentSearch = true;
+						}
 						fullSet.push({type: "proposal", label: searches[i].name, value: searches[i].name});//$NON-NLS-0$
 					}
 				}
@@ -796,14 +756,8 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 				}));
 			});
 			Deferred.all(promises).then(function(returnValues) {
-				//merge all the promise return values together
-				// TODO: WAT? why are we re-creating the array
-				var extendedProposals = [];
-				for (var i = 0; i < returnValues.length; i++) {
-					extendedProposals.push(returnValues[i]);
-				}
 				//Render UI
-				uiCallback(extendedProposals);
+				uiCallback(returnValues);
 			});
 		};
 		//Create and hook up the inputCompletion instance with the search box dom node.
@@ -819,28 +773,11 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 			}
 			var keyCode= e.charCode || e.keyCode;
 			if (keyCode === 13 ) {// ENTER
-				if (searcher) {
-					if (searchField.value.length > 0) {
-						mSearchUtils.addRecentSearch(serviceRegistry, searchField.value, searcher.useRegEx);
-						var query = searcher.createSearchQuery(searchField.value);
-						mSearchUtils.getOpenSearchPref(serviceRegistry, function(openInNewTab){
-							var href = require.toUrl("search/search.html") + "#"+query; //$NON-NLS-1$ //$NON-NLS-0$
-							if(openInNewTab){
-								window.open(href);
-							} else {
-								window.location = href;
-							}
-						});
-					}
-				} else {
-					window.alert(messages["Can't search: no search service is available"]);
-				}
+				mSearchUtils.doSearch(searcher, serviceRegistry, searchField.value);
 			} 
 		});
 		//Finally, hook up search options
-		mSearchUtils.getOpenSearchPref(serviceRegistry, function(openInNewTab){
-			_addSearchOptions(serviceRegistry, commandService, searcher, openInNewTab);
-		});
+		_addAdvancedSearchButton(advSearchOptContainer);
 		
 		// layout behavior.  Special handling for pages that use dijit for interior layout.
 		var dijitLayout = dojo.query(".dijitManagesLayout")[0]; //$NON-NLS-0$
@@ -967,6 +904,41 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 		commandService.addCommand(openResourceCommand);
 		commandService.registerCommandContribution("globalActions", "eclipse.openResource", 100,  null, true, new mCommands.CommandKeyBinding('f', true, true)); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
 
+		var globalSearchCommand = new mCommands.Command({
+			name: messages["Global search"],
+			tooltip: messages["Global search"],
+			id: "eclipse.globalSearch", //$NON-NLS-0$
+			callback: function(data) {
+				var searchField = dojo.byId("search"); //$NON-NLS-0$
+				if(searchField){
+					searchField.focus();
+				}
+			}});
+			
+		// set binding in editor and a general one for other pages
+		if (editor) {
+			editor.getTextView().setKeyBinding(new mKeyBinding.KeyBinding("h", true, false, true), globalSearchCommand.id);   //$NON-NLS-0$
+			editor.getTextView().setAction(globalSearchCommand.id, function() {
+					var selection = editor.getSelection();
+					var searchString = null;
+					if (selection.end > selection.start) {//If there is selection from editor, we want to use it as the default keyword
+						var model = editor.getModel();
+						searchString = model.getText(selection.start, selection.end);
+					}
+					var searchField = dojo.byId("search"); //$NON-NLS-0$
+					if(searchField){
+						if(searchString){
+							searchField.value = searchString;
+						}
+						searchField.focus();
+					}
+					return true;
+				}, globalSearchCommand);
+		}
+		
+		commandService.addCommand(globalSearchCommand);
+		commandService.registerCommandContribution("globalActions", "eclipse.globalSearch", 101,  null, true, new mCommands.CommandKeyBinding('h', true, false, true)); //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+
 		// Toggle trim command
 		var toggleBanner = new mCommands.Command({
 			name: messages["Toggle banner and footer"],
@@ -1012,6 +984,10 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'orion/commonHTML
 			if (clickNode && clickNode.id !== "keyAssist") { //$NON-NLS-0$
 				keyAssistNode.style.display = "none"; //$NON-NLS-0$
 			}
+			if(clickNode && !advSearchOptContainer.clicked(clickNode) && clickNode.id !== "advancedSearchDropDown"){
+				advSearchOptContainer.dismiss();
+			}
+			
 		}));
 		if (editor) {
 			editor.getTextView().addEventListener("MouseDown", function() { //$NON-NLS-0$

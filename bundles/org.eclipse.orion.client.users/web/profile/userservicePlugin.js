@@ -8,10 +8,20 @@
  * 
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
-/*global define confirm eclipse*/
+/*global define confirm document*/
 define(["orion/plugin", "profile/UsersService", "domReady!"], function(PluginProvider, UsersService) {
 	var usersService = new UsersService();
-	var provider = new PluginProvider();
+		var temp = document.createElement('a');
+	temp.href = "../mixloginstatic/LoginWindow.html";
+	var login = temp.href;
+	var headers = {
+		name: "Orion User Profile",
+		version: "1.0",
+		description: "This plugin supports access and modification of a user's profile information.",
+		login: login
+	};
+
+	var provider = new PluginProvider(headers);
 
 	usersService.info = function () {
 		return {

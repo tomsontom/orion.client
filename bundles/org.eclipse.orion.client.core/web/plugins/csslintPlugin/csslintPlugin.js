@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -9,7 +9,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-/*global console eclipse CSSLint window*/
+/*global console eclipse CSSLint window orion*/
 window.onload = function() {
 	function checkSyntax(title, contents) {
 		var cssResult = CSSLint.verify(contents),
@@ -64,7 +64,13 @@ window.onload = function() {
 	}
 	
 	try {
-		var provider = new orion.PluginProvider();
+		var headers = {
+			name: "Orion CSSLint Support",
+			version: "1.0",
+			description: "This plugin provides a CSSLint service to support outline and validation of CSS files."
+		};
+
+		var provider = new orion.PluginProvider(headers);
 		// Register validator
 		provider.registerService("orion.edit.validator",
 			{	checkSyntax: checkSyntax

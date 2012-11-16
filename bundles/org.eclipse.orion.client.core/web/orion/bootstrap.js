@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -9,7 +9,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-/*global define document dojo dijit window eclipse orion serviceRegistry:true widgets alert console*/
+/*global define document dojo dijit window eclipse orion serviceRegistry:true widgets alert console localStorage*/
 /*browser:true*/
 
 define(['require', 'orion/Deferred', 'orion/serviceregistry', 'orion/preferences', 'orion/pluginregistry', 'orion/config'], function(require, Deferred, mServiceregistry, mPreferences, mPluginRegistry, mConfig) {
@@ -61,13 +61,19 @@ define(['require', 'orion/Deferred', 'orion/serviceregistry', 'orion/preferences
 			}).then(function() {
 				var auth = serviceRegistry.getService("orion.core.auth"); //$NON-NLS-0$
 				if (auth) {
-					auth.getUser().then(function(user) {
+					var authPromise = auth.getUser().then(function(user) {
 						if (!user) {
-							auth.getAuthForm(window.location.href).then(function(formURL) {
+							return auth.getAuthForm(window.location.href).then(function(formURL) {
 								window.location = formURL;
 							});
+						} else {
+							localStorage.setItem("lastLogin", new Date().getTime()); //$NON-NLS-0$
 						}
 					});
+					var lastLogin = localStorage.getItem("lastLogin");
+					if (!lastLogin || lastLogin < (new Date().getTime() - (15 * 60 * 1000))) { // 15 minutes
+						return authPromise; // if returned waits for auth check before continuing
+					}
 				}
 			}).then(function() {
 				var result = {

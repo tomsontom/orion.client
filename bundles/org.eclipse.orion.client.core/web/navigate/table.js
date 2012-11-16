@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -45,10 +45,18 @@ dojo.addOnLoad(function(){
 	
 		var contentTypeService = new mContentTypes.ContentTypeService(serviceRegistry);
 		
-		var explorer = new mExplorerTable.FileExplorer({serviceRegistry: serviceRegistry, treeRoot: treeRoot, selection: selection, 
-				fileClient: fileClient, parentId: "explorer-tree", //$NON-NLS-0$
+		var explorer = new mExplorerTable.FileExplorer({
+				serviceRegistry: serviceRegistry, 
+				treeRoot: treeRoot, 
+				selection: selection, 
+				fileClient: fileClient, 
+				parentId: "explorer-tree", //$NON-NLS-0$
+				dragAndDrop: mFileCommands.uploadFile,
 				rendererFactory: function(explorer) {
-					return new mNavigatorRenderer.NavigatorRenderer({checkbox: false, decorateAlternatingLines: false, cachePrefix: "Navigator"}, explorer, commandService, contentTypeService);  //$NON-NLS-0$
+					return new mNavigatorRenderer.NavigatorRenderer({
+						checkbox: false, 
+						decorateAlternatingLines: false, 
+						cachePrefix: "Navigator"}, explorer, commandService, contentTypeService);  //$NON-NLS-0$
 				}}); 
 
 		function refresh() {

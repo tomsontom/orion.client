@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2009, 2011 IBM Corporation and others.
+ * Copyright (c) 2009, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -9,23 +9,7 @@
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 /*global define escape */
-define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, xhr, EventTarget) {
-	function formEncode(value) {
-		return encodeURIComponent(value).replace(/[!'()*]/g, escape).replace('%20', '+'); //$NON-NLS-0$ //$NON-NLS-1$
-	}
-
-	/**
-	 * @returns The map as application/x-www-form-urlencoded data.
-	 */
-	function formData(map) {
-		var keys = Object.keys(map);
-		var buf = [];
-		for (var i=0; i < keys.length; i++) {
-			var key = keys[i], value = map[key];
-			buf.push(formEncode(key) + "=" + formEncode(value)); //$NON-NLS-0$
-		}
-		return buf.join("&"); //$NON-NLS-0$
-	}
+define(["orion/Deferred", "orion/xhr", 'orion/EventTarget', 'orion/urlencode'], function(Deferred, xhr, EventTarget, urlencode) {
 
 	function getJSON(data) {
 		return data === "" ? null : JSON.parse(data);
@@ -51,9 +35,10 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 	UsersService.prototype = /** @lends eclipse.FileService.prototype */
 	{
 		getUsersListSubset : function(start, rows, onLoad) {
+			var ret = new Deferred();
 			var service = this;
 			var uri = "../users?start=" + start + "&rows=" + rows;
-			return xhr("GET", uri, { //$NON-NLS-1$ 
+			xhr("GET", uri, { //$NON-NLS-1$ 
 				headers : {
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
@@ -66,20 +51,21 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
 				}
-				return jsonData;
-			}, function(result) {
-				var error = getError(result);
+				ret.resolve(jsonData);
+			}, function(error) {
 				if(!service.info) {
-					handleAuthenticationError(error, function(){
-						service.getUsersListSubset(start, rows, onLoad); // retry GET
+					handleAuthenticationError(getError(error), function(){
+						service.getUsersListSubset(start, rows); // retry GET
 					});
 				}
-				return error;
+				ret.reject(error.response || error);
 			});
+			return ret;
 		},
 		getUsersList : function(onLoad) {
+			var ret = new Deferred();
 			var service = this;
-			return xhr("GET", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
+			xhr("GET", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
 				headers : {
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
@@ -92,20 +78,21 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
 				}
-				return jsonData.users;
-			}, function(result) {
-				var error = getError(result);
+				ret.resolve(jsonData.users);
+			}, function(error) {
 				if(!service.info) {
-					handleAuthenticationError(error, function(){
+					handleAuthenticationError(getError(error), function(){
 						service.getUsersList(onLoad); // retry GET
 					});
 				}
-				return error;
+				ret.reject(error.response || error);
 			});
+			return ret;
 		},
 		deleteUser : function(userURI, onLoad) {
+			var ret = new Deferred();
 			var service = this;
-			return xhr("DELETE", userURI, { //$NON-NLS-0$
+			xhr("DELETE", userURI, { //$NON-NLS-0$
 				headers : {
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
@@ -118,39 +105,43 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
 				}
-			}, function(result) {
-				var error = getError(result);
+				ret.resolve(jsonData);
+			}, function(error) {
 				if(!service.info) {
-					handleAuthenticationError(error, function(){
+					handleAuthenticationError(getError(error), function(){
 						service.deleteUser(userURI, onLoad); // retry DELETE
 					});
 				}
-				return error;
+				ret.reject(error.response || error);
 			});
+			return ret;
 		},
 		createUser : function(userName, password, email, onLoad, onError) {
-			return xhr("POST", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
+			var ret = new Deferred();
+			xhr("POST", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
 				headers : {
 					"Content-Type": "application/x-www-form-urlencoded", //$NON-NLS-1$ //$NON-NLS-0$
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
 				timeout: 15000,
-				data: formData({
+				data: urlencode.encodeFormData({
 					login : userName,
 					password : password,
 					email: email
 				}),
 				load : function(jsonData, xhrArgs) {
-					return jsonData;
+					ret.resolve(jsonData);
 				},
 				error : function(error, ioArgs) {
-					return error;
+					ret.reject(error.response || error);
 				}
 			});
+			return ret;
 		},
 		getUserInfo: function(userURI, onLoad){
+			var ret = new Deferred();
 			var service = this;
-			return xhr("GET", userURI, { //$NON-NLS-0$
+			xhr("GET", userURI, { //$NON-NLS-0$
 				headers : {
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
@@ -163,29 +154,29 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
 				}
-				return jsonData;
-			}, function(result) {
-				var error = getError(result);
+				ret.resolve(jsonData);
+			}, function(error) {
 				if(!service.info) {
-					handleAuthenticationError(error, function(){
+					handleAuthenticationError(getError(error), function(){
 						service.getUserInfo(userURI, onLoad); // retry GET
 					});
 				}
-				return error;
+				ret.reject(error.response || error);
 			});
+			return ret;
 		},
 		updateUserInfo: function(userUri, data, onLoad){
+			var ret = new Deferred();
 			var service = this;
 			var uri = userUri;
 			
 
 			if(data.password!==data.passwordRetype){
-				var ret = new Deferred();
 				ret.reject({message: messages["Passwords do not match!"]});
 				return ret;
 			}
 
-			return xhr("PUT", uri, { //$NON-NLS-0$
+			xhr("PUT", uri, { //$NON-NLS-0$
 				headers : {
 					"Content-Type": "application/json", //$NON-NLS-1$ //$NON-NLS-0$
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
@@ -196,33 +187,32 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 				var jsonData = getJSON(result.response);
 				if (onLoad){
 					if(typeof onLoad === "function") //$NON-NLS-0$
-						return onLoad(jsonData);
-					else{
+						onLoad(jsonData);
+					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
-						return jsonData;
-					}
-				} else {
-					return jsonData;
 				}
-			}, function(result) {
-				var error = getError(result);
+				ret.resolve(jsonData);
+			}, function(error) {
 				if(!service.info) {
-					handleAuthenticationError(error, function(){
+					handleAuthenticationError(getError(error), function(){
 						service.updateUserInfo(userUri, data, onLoad); // retry GET
 					});
 				}
-				return error;
+				ret.reject(error.response || error);
 			});
+			
+			return ret;
 		},
 		resetUserPassword: function(login, password, onLoad){
+			var ret = new Deferred();
 			var service = this;
-			return xhr("POST", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
+			xhr("POST", "../users", { //$NON-NLS-1$ //$NON-NLS-0$
 				headers : {
 					"Content-Type": "application/x-www-form-urlencoded", //$NON-NLS-1$ //$NON-NLS-0$
 					"Orion-Version" : "1" //$NON-NLS-1$ //$NON-NLS-0$
 				},
 				timeout : 15000,
-				data : formData({
+				data : urlencode.encodeFormData({
 					reset: true,
 					login : login,
 					password : password
@@ -235,10 +225,11 @@ define(["orion/Deferred", "orion/xhr", 'orion/EventTarget'], function(Deferred, 
 					else
 						service.dispatchEvent({type: onLoad, data: jsonData});
 				}
-				return jsonData;
+				ret.resolve(jsonData);
 			}, function(result) {
-				return result.response;
+				ret.reject(error.response || error);
 			});
+			return ret;
 		}
 	};
 	return UsersService;

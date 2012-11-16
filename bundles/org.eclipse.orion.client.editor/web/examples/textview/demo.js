@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -11,74 +11,73 @@
  *     Mihai Sucan (Mozilla Foundation) - fix for bug 350636
  *******************************************************************************/
  
-/*globals define window document setTimeout */
+/*globals define window */
 
-
-define(['examples/textview/demoSetup', 'tests/textview/test-performance'],   
+define(['examples/textview/demoSetup', 'tests/textview/test-performance', 'orion/textview/util'],   
  
-function(mSetup, mTestPerformance) {
+function(mSetup, mTestPerformance, util) {
+	
+	/** Console */
+	var document = window.document;
+	var console = document.getElementById('console'); //$NON-NLS-0$
+	var consoleCol = document.getElementById('consoleParent'); //$NON-NLS-0$
+	
+	/** Testing */
+	var bClearLog = document.getElementById("clearLog"); //$NON-NLS-0$
+	var bHideLog = document.getElementById("hideLog"); //$NON-NLS-0$
+	var bTest = document.getElementById("test"); //$NON-NLS-0$
+	var sTest = document.getElementById("testSelect"); //$NON-NLS-0$
+
+	/** Options */	
+	var bSetOptions = document.getElementById("setOptions"); //$NON-NLS-0$
+	var sContents = document.getElementById("contentsSelect"); //$NON-NLS-0$
+	var sTheme = document.getElementById("themeSelect"); //$NON-NLS-0$
+	var sTabSize = document.getElementById('tabSize'); //$NON-NLS-0$
+	var bReadOnly = document.getElementById('readOnly'); //$NON-NLS-0$
+	var bFullSel = document.getElementById('fullSelection'); //$NON-NLS-0$
+	var bWrap = document.getElementById('wrap'); //$NON-NLS-0$
+	var bExpandTab = document.getElementById('expandTab'); //$NON-NLS-0$
+	var bAutoSet = document.getElementById('autoSetOptions'); //$NON-NLS-0$
+	var table = document.getElementById('table'); //$NON-NLS-0$
+
+	function resize() {
+		var height = document.documentElement.clientHeight;
+		table.style.height = (height - (util.isIE ? 8 : 0)) + "px"; //$NON-NLS-0$
+		if (mSetup.view) { mSetup.view.resize(); }
+	}
+	resize();
+	window.onresize = resize;
 
 	function clearConsole () {
-		var console = window.document.getElementById('console');
 		if (!console) { return; }
 		while (console.hasChildNodes()) { console.removeChild(console.lastChild); }
 	}
 	
 	function showConsole () {
-		var console = window.document.getElementById('console');
 		if (!console) { return; }
-		var consoleCol = window.document.getElementById('consoleCol');
-		var consoleHeader = window.document.getElementById('consoleHeader');
-		var consoleActions = window.document.getElementById('consoleActions');
-		consoleCol.style.display = consoleHeader.style.display = consoleActions.style.display = "block";
+		consoleCol.style.display = "block"; //$NON-NLS-0$
 		if (mSetup.view) { mSetup.view.resize(); }
 	}
 	
 	function hideConsole () {
-		var console = window.document.getElementById('console');
 		if (!console) { return; }
-		var consoleCol = window.document.getElementById('consoleCol');
-		var consoleHeader = window.document.getElementById('consoleHeader');
-		var consoleActions = window.document.getElementById('consoleActions');
-		consoleCol.style.display = consoleHeader.style.display = consoleActions.style.display = "none";
+		consoleCol.style.display = "none"; //$NON-NLS-0$
 		if (mSetup.view) { mSetup.view.resize(); }
 	}
 	
 	function log (text) {
-		var console = window.document.getElementById('console');
 		if (!console) { return; }
 		showConsole();
 		for (var n = 1; n < arguments.length; n++) {
-			text += " ";
+			text += " "; //$NON-NLS-0$
 			text += arguments[n];
 		}
 		console.appendChild(document.createTextNode(text));
-		console.appendChild(document.createElement("br"));
+		console.appendChild(util.createElement(document, "br")); //$NON-NLS-0$
 		console.scrollTop = console.scrollHeight;
 	}
 	window.log = log;
 
-	var bCreateJava = document.getElementById("createJavaSample");
-	var bCreateJS = document.getElementById("createJavaScriptSample");
-	var bCreateHTML = document.getElementById("createHtmlSample");
-	var bCreatePlain = document.getElementById("createPlainTextSample");
-	var bCreateBidi = document.getElementById("createBidiTextSample");
-	var bCreateLoad = document.getElementById("createLoad");
-	var sLangSelect = document.getElementById("langSelect");
-	var tURLContent = document.getElementById("urlContent");
-	var bSetOptions = document.getElementById("setOptions");
-	var bClearLog = document.getElementById("clearLog");
-	var bHideLog = document.getElementById("hideLog");
-	var bTest = document.getElementById("test");
-	var bPerform = document.getElementById("performanceTest");
-	var sPerform = document.getElementById("performanceTestSelect");
-	var sTheme = document.getElementById("themeSelect");
-	var bReadOnly = document.getElementById('readOnly');
-	var bFullSel = document.getElementById('fullSelection');
-	var bWrap = document.getElementById('wrap');
-	var bExpandTab = document.getElementById('expandTab');
-	var sTabSize = document.getElementById('tabSize');
-	
 	function getOptions() {
 		return {
 			readonly: bReadOnly.checked,
@@ -101,10 +100,17 @@ function(mSetup, mTestPerformance) {
 		sTheme.value = options.themeClass;
 	}
 
+	var contents, currentContents;
 	function setOptions() {
 		var view = mSetup.checkView(getOptions());
 		view.focus();
 		updateOptions();
+		window.setTimeout(function() {
+			if (currentContents !== sContents.value) {
+				contents[sContents.value]();
+				currentContents = sContents.value;
+			}
+		}, 0);
 	}
 
 	function setupView(text, lang) {
@@ -115,65 +121,97 @@ function(mSetup, mTestPerformance) {
 	}
 	
 	function createJavaSample() {
-		return setupView(mSetup.getFile("text.txt"), "java");
+		return setupView(mSetup.getFile("text.txt"), "java"); //$NON-NLS-1$ //$NON-NLS-0$
 	}
 	
 	function createJavaScriptSample() {
-		return setupView(mSetup.getFile("/orion/textview/textView.js"), "js");
+		return setupView(mSetup.getFile("/orion/textview/textView.js"), "js"); //$NON-NLS-1$ //$NON-NLS-0$
 	}
 
 	function createHtmlSample() {
-		return setupView(mSetup.getFile("/examples/textview/demo.html"), "html");
+		return setupView(mSetup.getFile("/examples/textview/demo.html"), "html"); //$NON-NLS-1$ //$NON-NLS-0$
 	}
 	
 	function createPlainTextSample() {
 		var lineCount = 50000;
 		var lines = [];
 		for(var i = 0; i < lineCount; i++) {
-			lines.push("This is the line of text number "+i);
+			lines.push("This is the line of text number "+i); //$NON-NLS-0$
 		}
-		return setupView(lines.join("\r\n"), null);
+		return setupView(lines.join("\r\n"), null); //$NON-NLS-0$
 	}
 	
 	function createBidiTextSample() {
 		var lines = [];
-		lines.push("Hello \u0644\u0645\u0646\u0647");
-		return setupView(lines.join("\r\n"), null);
+		lines.push("Hello \u0644\u0645\u0646\u0647"); //$NON-NLS-0$
+		return setupView(lines.join(util.platformDelimiter), null);
 	}
 	
-	function createLoad() {
-		var text = tURLContent.value ? mSetup.getFile(tURLContent.value) : "";
-		return setupView(text, sLangSelect.value);
-	}
-
-	function test() {
-		log("test");
-	}
+	contents = {
+		createJavaSample: createJavaSample,
+		createJavaScriptSample: createJavaScriptSample,
+		createHtmlSample: createHtmlSample,
+		createPlainTextSample: createPlainTextSample,
+		createBidiTextSample: createBidiTextSample
+	};
 	
-	function performanceTest() {
-		mTestPerformance[sPerform.value]();
+	function updateSetOptionsButton() {
+		if (bAutoSet.checked) {
+			bSetOptions.style.display = "none";
+			setOptions();
+		} else {
+			bSetOptions.style.display = "block";
+		}
 	}
+	function checkSetOptions() {
+		if (bAutoSet.checked) {
+			setOptions();
+		}
+	}
+	updateSetOptionsButton();
 	
 	/* Adding events */
-	bCreateJava.onclick = createJavaSample;
-	bCreateJS.onclick = createJavaScriptSample;
-	bCreateHTML.onclick = createHtmlSample;
-	bCreatePlain.onclick = createPlainTextSample;
-	bCreateBidi.onclick = createBidiTextSample;
-	bCreateLoad.onclick = createLoad;
 	bSetOptions.onclick = setOptions;
+	sContents.onchange = checkSetOptions;
+	sTheme.onchange = checkSetOptions;
+	bReadOnly.onchange = checkSetOptions;
+	sTabSize.onchange = checkSetOptions;
+	bFullSel.onchange = checkSetOptions;
+	bWrap.onchange = checkSetOptions;
+	bExpandTab.onchange = checkSetOptions;
+	bAutoSet.onchange = updateSetOptionsButton;
+	
+	/* Adding console actions */
 	bClearLog.onclick = clearConsole;
 	bHideLog.onclick = hideConsole;
-	bTest.onclick = test;
-	bPerform.onclick = performanceTest;
-	var prefix = "test";
+
+	/* Adding testing actions */
+	var tests = {};
+	function test() {
+		log("test"); //$NON-NLS-0$
+	}
+	tests.test = test;
+	
+	function runTest() {
+		tests[sTest.value]();
+	}
+	bTest.onclick = runTest;
+	var option = util.createElement(document, "option"); //$NON-NLS-0$
+	option.setAttribute("value", "test"); //$NON-NLS-0$
+	option.appendChild(document.createTextNode("Test"));
+	sTest.appendChild(option);
+	var prefix = "test"; //$NON-NLS-0$
 	mTestPerformance.noDojo = true;
 	for (var property in mTestPerformance) {
 		if (property.indexOf(prefix) === 0) {
-			var option = document.createElement("OPTION");
-			option.setAttribute("value", property);
+			option = util.createElement(document, "option"); //$NON-NLS-0$
+			option.setAttribute("value", property); //$NON-NLS-0$
 			option.appendChild(document.createTextNode(property.substring(prefix.length	)));
-			sPerform.appendChild(option);
+			sTest.appendChild(option);
+			tests[property] = mTestPerformance[property];
 		}
 	}
+	
+	document.body.style.display = "block"; //$NON-NLS-0$
+	setOptions();
  });

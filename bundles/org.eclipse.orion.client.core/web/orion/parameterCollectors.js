@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -190,7 +190,8 @@ define(['i18n!orion/nls/messages', 'require', 'dojo', 'dijit', 'dijit/Menu', 'di
 				});
 				commandInvocation.parameters.forEach(function(parm) {
 					if (parm.label) {
-						dojo.create("label", {innerHTML: parm.label, "class": "parameterInput", "for": parm.name + "parameterCollector"}, parameterArea, "last"); //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+						var label = dojo.create("label", {"class": "parameterInput", "for": parm.name + "parameterCollector"}, parameterArea, "last"); //$NON-NLS-5$ //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$
+						label.textContent = parm.label;
 					} 
 					var options = {type: parm.type, id: parm.name + "parameterCollector"}; //$NON-NLS-0$
 					var field;

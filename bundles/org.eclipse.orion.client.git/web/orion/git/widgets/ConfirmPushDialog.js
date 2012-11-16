@@ -1,6 +1,6 @@
 /******************************************************************************* 
  * @license
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -35,7 +35,10 @@ define(['i18n!git/nls/gitmessages', 'dojo', 'dijit', 'dojox', 'dijit/Dialog', 'd
 		var header = dojo.byId("div1");
 		var button = dojo.byId("moreButton");
 		var dialog2 = this.options.dialog;
-		header.innerHTML = "You are going to push to the following remote: " + this.options.location + "<br><br> Click More to push to another remote or OK to push to default" ;
+		header.appendChild(document.createTextNode("You are going to push to the following remote: " + this.options.location));
+		header.appendChild(document.createElement("br"));
+		header.appendChild(document.createElement("br"));
+		header.appendChild(document.createTextNode(" Click More to push to another remote or OK to push to default"));
 		dojo.connect(button,"onclick",function(){
 				dialog2.startup();
 				dialog2.show();

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @license
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -54,7 +54,7 @@ define([], function(){
 					href = href.replace('%'+(i+1), segments[i]); //$NON-NLS-0$
 				}
 				link.setAttribute('href', href); //$NON-NLS-0$
-				link.innerHTML = match;
+				link.textContent = match;
 				result.appendChild(link);
 				text = remainder;
 			}

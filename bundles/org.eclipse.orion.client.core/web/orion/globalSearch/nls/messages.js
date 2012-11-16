@@ -5,18 +5,16 @@
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
  * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
- *
- * Contributors: IBM Corporation - initial API and implementation
- *******************************************************************************/
-
-/*global define*/
-define(function() {
-	function formatMessage(msg) {
-		var args = arguments;
-		return msg.replace(/\$\{([^\}]+)\}/g, function(str, index) { return args[(index << 0) + 1]; });
-	}
-
-	return {
-		formatMessage: formatMessage
+ * 
+ ******************************************************************************/
+define(['orion/i18n!orion/globalSearch/nls/messages'], function(bundle) {
+	var result = {
+			root:true
 	};
+	Object.keys(bundle).forEach(function(key) {
+		if (typeof result[key] === 'undefined') {
+			result[key] = bundle[key];
+		}
+	});
+	return result;
 });
