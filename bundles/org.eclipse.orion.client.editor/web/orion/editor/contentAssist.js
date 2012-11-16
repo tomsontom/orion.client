@@ -446,14 +446,22 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 							if( segment.style ) {
 								if( segment.style.bold ) {
 									itemNode.style.fontWeight = "bold";
-								} else if(segment.style.italic) {
+								}
+								
+								if(segment.style.italic) {
 									itemNode.style.fontStyle = "italic";
-								} else if(segment.style.color != null) {
+								}
+								
+								if(segment.style.color != null) {
 									itemNode.style.color = segment.style.color;
-								} else if(segment.style.fontname != null) {
-									itemNode.style.fontName = segment.style.fontname;
-								} else if(segment.style.backgroundColor != null) {
-									itemNode.style.backgroundColor = segment.style.backgroundcolor;
+								}
+								
+								if(segment.style.fontName != null) {
+									itemNode.style.fontName = segment.style.fontName;
+								}
+								
+								if(segment.style.backgroundColor != null) {
+									itemNode.style.backgroundColor = segment.style.backgroundColor;
 								}
 							}
 							itemNode.appendChild(document.createTextNode(segment.value));
