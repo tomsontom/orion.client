@@ -432,8 +432,14 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 						contentDiv.className = proposal.description.styleClass;
 					}
 					
+					if( proposal.description.icon ) {
+						var iconNode = util.createElement(document, "img");
+						iconNode.src = proposal.description.icon.src;
+						contentNode.appendChild(iconNode);
+					}
+					
 					if( proposal.description.segments ) {
-						proposal.description.segments.forEach( function(segment) {
+					    proposal.description.segments.forEach( function(segment) {
 							var itemNode = util.createElement(document, "span");
 							var styleString = "";
 							
