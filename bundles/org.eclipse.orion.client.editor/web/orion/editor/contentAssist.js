@@ -479,7 +479,7 @@ define("orion/editor/contentAssist", ['i18n!orion/editor/nls/messages', 'orion/t
 				if (isSelected) {
 					this.parentNode.setAttribute("aria-activedescendant", div.id);
 				}
-				div.appendChild(node);
+				div.appendChild(node, div);
 			}
 			
 			parent.appendChild(div);
